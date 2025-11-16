@@ -48,5 +48,12 @@ namespace JsonWbTknDotNET.Controllers
 
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin")]
+        public IActionResult AdminEndPoint()
+        {
+            return Ok("You are an admin");
+        }
+
     }
 }
