@@ -1,19 +1,22 @@
 ﻿using JsonWbTknDotNET.Entities;
 using JsonWbTknDotNET.Models;
-using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using System.Reflection.Metadata.Ecma335;
 
 namespace JsonWbTknDotNET.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(IConfiguration configuration): ControllerBase
     {
         public static User user = new();
 
-        [HttpPost]
-        [Route("Register")]
+        [HttpPost("Register")]
         public ActionResult<User> Register(UserDto request)
         {
             if (string.IsNullOrEmpty(request.Password))
@@ -26,9 +29,8 @@ namespace JsonWbTknDotNET.Controllers
             return Ok(user);
         }
 
-        [HttpPost]
-        [Route("login")]
-        public ActionResult<string> login(UserDto request)
+        [HttpPost("login")]
+        public ActionResult<string> Login(UserDto request)
         {
             if (string.IsNullOrEmpty(user.PassHash) || string.IsNullOrEmpty(request.Password))
                 return BadRequest("BadRequest!");
@@ -37,9 +39,33 @@ namespace JsonWbTknDotNET.Controllers
             if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PassHash, request.Password) == PasswordVerificationResult.Failed)
                 return BadRequest("Incorrect Password");
 
-            string token = "User has loggedIn";
+            string token = CreateToken(user);
 
             return Ok(token);
         }
+
+        private string CreateToken(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.UserName)
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("JwtSettings:SecretKey")!));
+
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
+
+            var tokenDescription = new JwtSecurityToken
+            (
+                issuer: configuration.GetValue<String>("JwtSettings:Issuer"),
+                audience: configuration.GetValue<String>("JwtSettings:Audience"),
+                claims: claims,
+                expires: DateTime.UtcNow.AddDays(1),
+                signingCredentials: creds
+            );
+            return new JwtSecurityTokenHandler().WriteToken(tokenDescription);
+        
+        }
+
     }
 }
