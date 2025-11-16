@@ -9,12 +9,13 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Reflection.Metadata.Ecma335;
 using JsonWbTknDotNET.Services;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace JsonWbTknDotNET.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(IAuthService authService): ControllerBase
+    public class AuthController(IAuthService authService) : ControllerBase
     {
         public static User user = new();
 
@@ -36,6 +37,15 @@ namespace JsonWbTknDotNET.Controllers
                 return BadRequest("Invalid Username or Password");
 
             return Ok(token);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult AuthentiactedEndPoint()
+        {
+
+            return Ok("You are authenticated");
+
         }
 
     }
