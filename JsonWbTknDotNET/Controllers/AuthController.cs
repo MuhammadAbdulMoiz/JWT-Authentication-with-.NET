@@ -1,14 +1,7 @@
 ﻿using JsonWbTknDotNET.Entities;
 using JsonWbTknDotNET.Models;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using System.IdentityModel.Tokens.Jwt;
-using System.Reflection.Metadata.Ecma335;
 using JsonWbTknDotNET.Services;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 
 namespace JsonWbTknDotNET.Controllers
@@ -37,6 +30,16 @@ namespace JsonWbTknDotNET.Controllers
                 return BadRequest("Invalid Username or Password");
 
             return Ok(tokens);
+        }
+
+        [HttpPost("refreshTkn")]
+        public async Task<ActionResult<TokenResponseDto>> RefreshToken(RefreshTokenRequestDto request)
+        {
+            var result = await authService.RefreshTokenAsync(request);
+            if (result is null || result.AccessToken is null || result.RefreshToken is null)
+                return BadRequest("Invalid client request");
+
+            return Ok(result);
         }
 
         [Authorize]

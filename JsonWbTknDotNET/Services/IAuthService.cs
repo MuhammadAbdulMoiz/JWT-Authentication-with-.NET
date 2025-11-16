@@ -6,8 +6,9 @@ namespace JsonWbTknDotNET.Services
     public interface IAuthService
     {
         Task<User?> RegisterAsync(UserDto request);
+
         Task<TokenResponseDto?> LoginAsync(UserDto request);
 
-        Task<TokenResponseDto?> ResponseDtoxAsync(RefreshTokenRequestDto request);
+        Task<TokenResponseDto?> RefreshTokenAsync(RefreshTokenRequestDto request);
     }
 }
