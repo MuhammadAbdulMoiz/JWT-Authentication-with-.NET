@@ -25,5 +25,21 @@ namespace JsonWbTknDotNET.Controllers
             user.PassHash = hash;
             return Ok(user);
         }
+
+        [HttpPost]
+        [Route("login")]
+        public ActionResult<string> login(UserDto request)
+        {
+            if (string.IsNullOrEmpty(user.PassHash) || string.IsNullOrEmpty(request.Password))
+                return BadRequest("BadRequest!");
+            if (user.UserName != request.UserName)
+                return BadRequest("User NotFound");
+            if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PassHash, request.Password) == PasswordVerificationResult.Failed)
+                return BadRequest("Incorrect Password");
+
+            string token = "User has loggedIn";
+
+            return Ok(token);
+        }
     }
 }
