@@ -1,0 +1,6 @@
+@JsonWbTknDotNET_HostAddress = http://localhost:5008
+
+GET {{JsonWbTknDotNET_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
