@@ -4,8 +4,10 @@ using JsonWbTknDotNET.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace JsonWbTknDotNET.Services
@@ -31,7 +33,7 @@ namespace JsonWbTknDotNET.Services
             return user;
         }
 
-        public async Task<string?> LoginAsync(UserDto request)
+        public async Task<TokenResponseDto?> LoginAsync(UserDto request)
         {
             var user = context.Users.FirstOrDefault(u => u.UserName == request.UserName);
 
@@ -41,8 +43,53 @@ namespace JsonWbTknDotNET.Services
             if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PassHash, request.Password) == PasswordVerificationResult.Failed)
                 return null;
 
-            return CreateToken(user);
+            return new TokenResponseDto
+            {
+                AccessToken = CreateToken(user),
+                RefreshToken = await SaveRefreshTokenAsync(user) 
+            };
         }
+
+        public async Task<TokenResponseDto?> RefreshTokenAsync(RefreshTokenRequestDto request)
+        {
+            var user = await ValidateRefreshToken(request.UserId, request.RefreshToken);
+            if (user is null)
+                return null;
+
+            return new TokenResponseDto
+            {
+                AccessToken = CreateToken(user),
+                RefreshToken = await SaveRefreshTokenAsync(user)
+            };
+        }
+
+        private async Task<User?> ValidateRefreshToken(Guid UserId, string RefreshToken)
+        {
+            var user =  await context.Users.FindAsync(UserId);
+            if (user is null || user.RefreshToken != RefreshToken || user.RefreshTkExpTime <= DateTime.UtcNow)
+                return null;
+
+            return user;
+
+        }
+
+        private string CreateRefreshToken(User user)
+        {
+            var randomBytes = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomBytes);
+            return Convert.ToBase64String(randomBytes);
+        }
+
+        private async Task<string> SaveRefreshTokenAsync(User user)
+        {
+            user.RefreshToken = CreateRefreshToken(user);
+            user.RefreshTkExpTime = DateTime.UtcNow.AddDays(7);
+            context.Users.Update(user);
+            await context.SaveChangesAsync();
+            return user.RefreshToken;
+        }
+
         private string CreateToken(User user)
         {
             var claims = new List<Claim>

@@ -30,13 +30,13 @@ namespace JsonWbTknDotNET.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<string>> Login(UserDto request)
+        public async Task<ActionResult<TokenResponseDto>> Login(UserDto request)
         {
-            var token = await authService.LoginAsync(request);
-            if (token is null)
+            var tokens = await authService.LoginAsync(request);
+            if (tokens is null)
                 return BadRequest("Invalid Username or Password");
 
-            return Ok(token);
+            return Ok(tokens);
         }
 
         [Authorize]

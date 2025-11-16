@@ -4,10 +4,15 @@
     {
         public Guid Id { get; set; }
 
-        public string? UserName { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
 
-        public string? PassHash { get; set; } = string.Empty;
+        public string PassHash { get; set; } = string.Empty;
 
-        public string? Role { get; set; } = string.Empty;
-    }
+        public string Role { get; set; } = string.Empty;
+
+        public string? RefreshToken { get; set; }
+
+        public DateTime? RefreshTkExpTime { get; set; }
+
+        }
 }
